@@ -183,6 +183,7 @@ jobs:
           file: ./docker/cuda.Dockerfile
           platforms: linux/amd64
           tags: tygozwolle/libretranslate-withmodels:${{ env.TAG }}-cuda
+          build-args: with_models=true
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
