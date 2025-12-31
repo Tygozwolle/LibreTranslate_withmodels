@@ -61,14 +61,14 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - name: Build and push Cuda Image
-        uses: docker/build-push-action@v5
-        with:
-          file: ./docker/cuda.Dockerfile
-          platforms: linux/amd64
-          tags: ${{ steps.get-variables.outputs.gh-username-lower }}/libretranslate:${{ env.TAG }}-cuda
-          push: true
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-        env:
-          TAG: ${{ startsWith(github.ref, 'refs/tags/') && steps.get-variables.outputs.version || 'latest' }}
+    #  - name: Build and push Cuda Image
+    #    uses: docker/build-push-action@v5
+   #     with:
+    #      file: ./docker/cuda.Dockerfile
+    #      platforms: linux/amd64
+   #       tags: ${{ steps.get-variables.outputs.gh-username-lower }}/libretranslate:${{ env.TAG }}-cuda
+  #        push: true
+   #       cache-from: type=gha
+   #       cache-to: type=gha,mode=max
+ #       env:
+  #        TAG: ${{ startsWith(github.ref, 'refs/tags/') && steps.get-variables.outputs.version || 'latest' }}
