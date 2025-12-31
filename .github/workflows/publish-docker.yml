@@ -48,7 +48,7 @@ jobs:
         with:
           file: ./docker/Dockerfile
           platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.get-variables.outputs.gh-username-lower }}/libretranslate:${{ env.TAG }}
+          tags: ghcr.io/${{ steps.get-variables.outputs.gh-username-lower }}/libretranslate:${{ env.TAG }}
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
