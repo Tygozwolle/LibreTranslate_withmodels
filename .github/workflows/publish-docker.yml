@@ -43,6 +43,21 @@ jobs:
           echo ::set-output name=version::${GITHUB_REF#refs/tags/}
           echo ::set-output name=gh-username-lower::$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
 
+      - name: Free Disk Space (Ubuntu)
+        uses: jlumbroso/free-disk-space@main
+        with:
+          # this might remove tools that are actually needed,
+          # if set to "true" but frees about 6 GB
+          tool-cache: false
+
+          # all of these default to true, but feel free to set to
+          # "false" if necessary for your workflow
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          docker-images: true
+          swap-storage: true
       - name: Build and push Image
         uses: docker/build-push-action@v5
         with:
