@@ -64,7 +64,7 @@ jobs:
           file: ./docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           build-args: with_models=true
-          tags: ${{ steps.get-variables.outputs.gh-username-lower }}/libretranslate:${{ env.TAG }}
+          tags: tygozwolle/libretranslate-withmodels:${{ env.TAG }}
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
