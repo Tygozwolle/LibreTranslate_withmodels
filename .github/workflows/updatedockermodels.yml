@@ -1,7 +1,7 @@
 name: Build models Docker Image
 
 on:
-  push:
+#  push:
     # branches:
     #   - main
   workflow_dispatch:
