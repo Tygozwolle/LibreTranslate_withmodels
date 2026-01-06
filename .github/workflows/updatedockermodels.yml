@@ -76,7 +76,7 @@ jobs:
           push: true
           tags: |
             tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
-            ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
+    # ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
 
   # -----------------------------------------------------------------
   # JOB 2: GPU BUILD (CUDA, amd64 only)
@@ -145,4 +145,4 @@ jobs:
           # Appends '-cuda' to the tag
           tags: |
             tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
-            ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
+   # ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
