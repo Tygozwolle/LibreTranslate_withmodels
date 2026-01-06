@@ -1,24 +1,30 @@
-name: Build and Publish Docker Image
+name: Build models Docker Image
 
 on:
   push:
-    branches:
-      - main
+    # branches:
+    #   - main
   workflow_dispatch:
+
 permissions:
   contents: read
   packages: write
 
 jobs:
+  # -----------------------------------------------------------------
+  # JOB 1: CPU BUILD (Multi-arch: amd64, arm64)
+  # -----------------------------------------------------------------
   main:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        branche: [10, 12, 14]
+        branche: [v1.0.0, main]
       fail-fast: false
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branche }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -39,74 +45,53 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Variables
-        id: get-variables
+      - name: Determine Tags and Variables
+        id: meta
         run: |
-          echo ::set-output name=version::${GITHUB_REF#refs/tags/}
-          echo ::set-output name=gh-username-lower::$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
+          if [ "${{ matrix.branche }}" == "main" ]; then
+            echo "DOCKER_TAG=latest" >> $GITHUB_OUTPUT
+          else
+            echo "DOCKER_TAG=${{ matrix.branche }}" >> $GITHUB_OUTPUT
+          fi
+          echo "GH_USER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
           tool-cache: false
-
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
           android: true
           dotnet: true
           haskell: true
           large-packages: true
           docker-images: true
           swap-storage: true
-      - name: Build and push Image
+
+      - name: Build and push CPU Image
         uses: docker/build-push-action@v5
         with:
+          context: .
           file: ./docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           build-args: with_models=true
-          tags: tygozwolle/libretranslate-withmodels:${{ env.TAG }}
           push: true
-      #    cache-from: type=gha
-       #   cache-to: type=gha,mode=max
-        env:
-          TAG: ${{ startsWith(github.ref, 'refs/tags/') && steps.get-variables.outputs.version || 'latest' }}
+          tags: |
+            tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
+            ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
 
-  #    - name: Free Disk Space (Ubuntu)
-  #      uses: jlumbroso/free-disk-space@main
-  #      with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-  #        tool-cache: false
-
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
- #         android: true
-        #  dotnet: true
- #         haskell: true
-  #        large-packages: true
-  #        docker-images: true
-   #       swap-storage: true
-
-    #  - name: Build and push Cuda Image
-    #    uses: docker/build-push-action@v5
-   #     with:
-    #      file: ./docker/cuda.Dockerfile
-    #      platforms: linux/amd64
-   #       tags: ${{ steps.get-variables.outputs.gh-username-lower }}/libretranslate:${{ env.TAG }}-cuda
-  #        push: true
-   #       cache-from: type=gha
-   #       cache-to: type=gha,mode=max
- #       env:
-  #        TAG: ${{ startsWith(github.ref, 'refs/tags/') && steps.get-variables.outputs.version || 'latest' }}
+  # -----------------------------------------------------------------
+  # JOB 2: GPU BUILD (CUDA, amd64 only)
+  # -----------------------------------------------------------------
   maingpu:
     runs-on: ubuntu-latest
     strategy:
+      matrix:
+        branche: [v1.0.0, main]
       fail-fast: false
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ matrix.branche }}
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -127,65 +112,37 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get Variables
-        id: get-variables
+      - name: Determine Tags and Variables
+        id: meta
         run: |
-          echo ::set-output name=version::${GITHUB_REF#refs/tags/}
-          echo ::set-output name=gh-username-lower::$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')
+          # Same logic as CPU: main -> latest, v1.0.0 -> v1.0.0
+          if [ "${{ matrix.branche }}" == "main" ]; then
+            echo "DOCKER_TAG=latest" >> $GITHUB_OUTPUT
+          else
+            echo "DOCKER_TAG=${{ matrix.branche }}" >> $GITHUB_OUTPUT
+          fi
+          echo "GH_USER_LOWER=$(echo ${{ github.repository_owner }} | tr '[:upper:]' '[:lower:]')" >> $GITHUB_OUTPUT
 
       - name: Free Disk Space (Ubuntu)
         uses: jlumbroso/free-disk-space@main
         with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
           tool-cache: false
-
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
           android: true
           dotnet: true
           haskell: true
           large-packages: true
           docker-images: true
           swap-storage: true
-#      - name: Build and push Image
-   #     uses: docker/build-push-action@v5
-  #      with:
-   #       file: ./docker/Dockerfile
-  #        platforms: linux/amd64,linux/arm64
- #         build-args: with_models=true
-    #      tags: tygozwolle/libretranslate-withmodels:${{ env.TAG }}
-   #       push: true
-   #       cache-from: type=gha
-   #       cache-to: type=gha,mode=max
-   #     env:
-    #      TAG: ${{ startsWith(github.ref, 'refs/tags/') && steps.get-variables.outputs.version || 'latest' }}
 
-  #    - name: Free Disk Space (Ubuntu)
-  #      uses: jlumbroso/free-disk-space@main
-  #      with:
-          # this might remove tools that are actually needed,
-          # if set to "true" but frees about 6 GB
-  #        tool-cache: false
-
-          # all of these default to true, but feel free to set to
-          # "false" if necessary for your workflow
- #         android: true
-        #  dotnet: true
- #         haskell: true
-  #        large-packages: true
-  #        docker-images: true
-   #       swap-storage: true
-
-      - name: Build and push Cuda Image
+      - name: Build and push CUDA Image
         uses: docker/build-push-action@v5
         with:
+          context: .
           file: ./docker/cuda.Dockerfile
           platforms: linux/amd64
-          tags: tygozwolle/libretranslate-withmodels:${{ env.TAG }}-cuda
           build-args: with_models=true
           push: true
-         # cache-from: type=gha
-       #   cache-to: type=gha,mode=max
-        env:
-          TAG: ${{ startsWith(github.ref, 'refs/tags/') && steps.get-variables.outputs.version || 'latest' }}
+          # Appends '-cuda' to the tag
+          tags: |
+            tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
+            ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
