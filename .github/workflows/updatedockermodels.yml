@@ -32,19 +32,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Determine Tags and Variables
         id: meta
         run: |
@@ -66,17 +53,35 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - name: Build and push CPU Image
+      - name: Build CPU Image (no push)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/Dockerfile
           platforms: linux/amd64,linux/arm64
           build-args: with_models=true
-          push: true
+          push: false
           tags: |
             tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
-    # ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
+          outputs: type=docker,dest=/tmp/cpu-image.tar
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load and Push CPU Image
+        run: |
+          docker load --input /tmp/cpu-image.tar
+          docker push tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}
 
   # -----------------------------------------------------------------
   # JOB 2: GPU BUILD (CUDA, amd64 only)
@@ -98,19 +103,6 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Determine Tags and Variables
         id: meta
@@ -134,15 +126,32 @@ jobs:
           docker-images: true
           swap-storage: true
 
-      - name: Build and push CUDA Image
+      - name: Build CUDA Image (no push)
         uses: docker/build-push-action@v5
         with:
           context: .
           file: ./docker/cuda.Dockerfile
           platforms: linux/amd64
           build-args: with_models=true
-          push: true
-          # Appends '-cuda' to the tag
+          push: false
           tags: |
             tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
-   # ghcr.io/${{ steps.meta.outputs.GH_USER_LOWER }}/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
+          outputs: type=docker,dest=/tmp/cuda-image.tar
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Load and Push CUDA Image
+        run: |
+          docker load --input /tmp/cuda-image.tar
+          docker push tygozwolle/libretranslate-withmodels:${{ steps.meta.outputs.DOCKER_TAG }}-cuda
