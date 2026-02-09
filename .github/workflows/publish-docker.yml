@@ -68,6 +68,7 @@ jobs:
           build-args: with_models=true
           tags: tygozwolle/libretranslate-withmodels:${{ env.TAG }}
           push: false
+          load: true
       #    cache-from: type=gha
        #   cache-to: type=gha,mode=max
         env:
@@ -191,6 +192,7 @@ jobs:
           tags: tygozwolle/libretranslate-withmodels:${{ env.TAG }}-cuda
           build-args: with_models=true
           push: false
+          load: true
          # cache-from: type=gha
        #   cache-to: type=gha,mode=max
         env:
